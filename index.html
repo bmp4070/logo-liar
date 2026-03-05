@@ -291,6 +291,18 @@
   .stat-box { text-align: center; }
   .stat-box .stat-num { font-size: 2rem; font-weight: 800; }
   .stat-box .stat-label { font-size: .75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .end-rank {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin: 4px 0 8px;
+    padding: 6px 20px;
+    border-radius: 8px;
+    background: rgba(124, 77, 255, .15);
+    border: 1px solid rgba(124, 77, 255, .3);
+    color: var(--accent);
+  }
+
   .stat-num.gold { color: #ffd600; }
   .stat-num.green { color: #00c853; }
   .stat-num.red { color: #e10600; }
@@ -339,6 +351,7 @@
 <!-- End screen -->
 <div class="screen-overlay hidden" id="end-screen">
   <h2>Time's Up!</h2>
+  <div class="end-rank" id="end-rank"></div>
   <div class="end-stats">
     <div class="stat-box"><div class="stat-num gold" id="end-score">0</div><div class="stat-label">Score</div></div>
     <div class="stat-box"><div class="stat-num green" id="end-correct">0</div><div class="stat-label">Correct</div></div>
@@ -511,6 +524,18 @@
     }, 1000);
   }
 
+  function getRank(score, correct, wrong) {
+    const accuracy = correct + wrong > 0 ? correct / (correct + wrong) : 0;
+    if (score >= 2000) return '\u{1f451} Logo Overlord';
+    if (score >= 1500) return '\u{1f9d9} Brand Wizard';
+    if (score >= 1000) return '\u{1f50d} Icon Detective';
+    if (score >= 700)  return '\u{1f3af} Sharp Spotter';
+    if (score >= 400)  return '\u{1f440} Keen Eye';
+    if (score >= 200)  return '\u{1f476} Brand Rookie';
+    if (accuracy === 0) return '\u{1f648} The Deceived';
+    return '\u{1f914} Logo Guesser';
+  }
+
   function endGame() {
     clearInterval(timerInterval);
     timerInterval = null;
@@ -518,6 +543,7 @@
     document.getElementById('end-correct').textContent = correctCount;
     document.getElementById('end-wrong').textContent = wrongCount;
     document.getElementById('end-streak').textContent = bestStreak;
+    document.getElementById('end-rank').textContent = getRank(score, correctCount, wrongCount);
     endScreen.classList.remove('hidden');
   }
 
