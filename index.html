@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logo Liar</title>
+<style>
+  /* ── Theme variables ── */
+  :root {
+    --bg: #0a0a1a;
+    --bg-card: #12122a;
+    --bg-btn: #1a1a3a;
+    --bg-btn-hover: #22224a;
+    --bg-overlay: rgba(10,10,26,.95);
+    --bg-kbd: #222;
+    --border: #2a2a4a;
+    --border-btn: #333;
+    --border-kbd: #444;
+    --text: #eee;
+    --text-muted: #888;
+    --text-dim: #555;
+    --text-instructions: #666;
+    --text-btn: #ddd;
+    --fake-label: rgba(255,255,255,.85);
+    --fake-shadow: rgba(0,0,0,.5);
+    --logo-bg: #f5f5f5;
+    --logo-border: #ddd;
+    --accent: #7c4dff;
+    --accent-hover: #651fff;
+    --accent-glow: rgba(124, 77, 255, .4);
+  }
+
+  [data-theme="light"] {
+    --bg: #f0f0f5;
+    --bg-card: #fff;
+    --bg-btn: #e8e8f0;
+    --bg-btn-hover: #dcdceb;
+    --bg-overlay: rgba(240,240,245,.97);
+    --bg-kbd: #e0e0e0;
+    --border: #ccc;
+    --border-btn: #bbb;
+    --border-kbd: #aaa;
+    --text: #1a1a2e;
+    --text-muted: #666;
+    --text-dim: #999;
+    --text-instructions: #777;
+    --text-btn: #333;
+    --fake-label: rgba(0,0,0,.8);
+    --fake-shadow: rgba(0,0,0,.15);
+    --logo-bg: #fff;
+    --logo-border: #e0e0e0;
+    --accent: #6200ea;
+    --accent-hover: #4a00b0;
+    --accent-glow: rgba(98, 0, 234, .25);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+    overflow-x: hidden;
+    transition: background .3s, color .3s;
+  }
+
+  /* ── Theme toggle ── */
+  .theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 200;
+    background: var(--bg-btn);
+    border: 2px solid var(--border-btn);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all .2s;
+    color: var(--text);
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--accent);
+    transform: scale(1.1);
+  }
+
+  /* ── Header ── */
+  .header {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px 0;
+  }
+
+  .score-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .score-label { font-size: .7rem; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+  .score-value { font-size: 1.8rem; font-weight: 800; color: #ffd600; }
+  .streak { font-size: .8rem; color: #ff9100; margin-top: 2px; min-height: 1.2em; }
+
+  .timer-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .timer-value {
+    font-size: 2rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+
+  .timer-value.warning { color: #ff9100; }
+  .timer-value.danger { color: #e10600; animation: pulse-timer .5s infinite; }
+
+  @keyframes pulse-timer {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+  }
+
+  /* ── Title ── */
+  h1 {
+    margin-top: 16px;
+    font-size: 2rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-shadow: 0 0 20px var(--accent-glow);
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: .85rem;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  /* ── Game card ── */
+  .card {
+    margin-top: 28px;
+    background: var(--bg-card);
+    border: 3px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 320px;
+    min-height: 300px;
+    position: relative;
+    transition: border-color .2s, box-shadow .2s, background .3s;
+  }
+
+  .card.correct { border-color: #00c853; box-shadow: 0 0 30px rgba(0,200,83,.2); }
+  .card.wrong { border-color: #e10600; box-shadow: 0 0 30px rgba(225,6,0,.2); }
+
+  .fake-label {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--fake-label);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 0 2px 8px var(--fake-shadow);
+    z-index: 2;
+  }
+
+  .logo-container {
+    width: 160px;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--logo-bg);
+    border: 2px solid var(--logo-border);
+    border-radius: 16px;
+    padding: 16px;
+  }
+
+  .logo-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  .round-counter {
+    font-size: .75rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* ── Choices ── */
+  .choices {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 400px;
+    padding: 0 16px;
+  }
+
+  .choice-btn {
+    background: var(--bg-btn);
+    border: 2px solid var(--border-btn);
+    border-radius: 12px;
+    color: var(--text-btn);
+    font-size: 1.05rem;
+    font-weight: 600;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: all .15s;
+    outline: none;
+  }
+
+  .choice-btn:hover { border-color: var(--accent); color: var(--text); background: var(--bg-btn-hover); }
+  .choice-btn:active { transform: scale(.97); }
+  .choice-btn.correct-pick { background: #00c853; border-color: #33ff77; color: #fff; }
+  .choice-btn.wrong-pick { background: #e10600; border-color: #ff4444; color: #fff; }
+  .choice-btn.reveal-correct { border-color: #00c853; color: #00c853; }
+  .choice-btn.disabled { pointer-events: none; opacity: .6; }
+
+  /* ── Start / End screens ── */
+  .screen-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-overlay);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    gap: 16px;
+  }
+
+  .screen-overlay.hidden { display: none; }
+
+  .screen-overlay h2 {
+    font-size: 2.4rem;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+
+  .screen-overlay .tagline {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin-bottom: 16px;
+    text-align: center;
+    padding: 0 20px;
+  }
+
+  .start-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: 700;
+    padding: 16px 48px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all .15s;
+  }
+
+  .start-btn:hover { background: var(--accent-hover); transform: scale(1.05); }
+
+  .end-stats {
+    display: flex;
+    gap: 32px;
+    margin: 16px 0;
+  }
+
+  .stat-box { text-align: center; }
+  .stat-box .stat-num { font-size: 2rem; font-weight: 800; }
+  .stat-box .stat-label { font-size: .75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .stat-num.gold { color: #ffd600; }
+  .stat-num.green { color: #00c853; }
+  .stat-num.red { color: #e10600; }
+  .stat-num.blue { color: #42a5f5; }
+
+  .instructions {
+    color: var(--text-instructions);
+    font-size: .78rem;
+    text-align: center;
+    margin-top: 20px;
+    padding: 0 20px;
+    max-width: 420px;
+    line-height: 1.6;
+  }
+
+  .instructions kbd {
+    background: var(--bg-kbd);
+    border: 1px solid var(--border-kbd);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: .75rem;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 480px) {
+    .card { padding: 24px 20px; min-width: 280px; }
+    .logo-container { width: 120px; height: 120px; padding: 12px; }
+    .choices { max-width: 340px; }
+    .choice-btn { font-size: .95rem; padding: 12px 14px; }
+    h1 { font-size: 1.5rem; }
+    .theme-toggle { width: 34px; height: 34px; font-size: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">&#9790;</button>
+
+<!-- Start screen -->
+<div class="screen-overlay" id="start-screen">
+  <h2>Logo Liar</h2>
+  <p class="tagline">The name is a lie. Can you spot the real logo?</p>
+  <button class="start-btn" id="start-btn">PLAY</button>
+</div>
+
+<!-- End screen -->
+<div class="screen-overlay hidden" id="end-screen">
+  <h2>Time's Up!</h2>
+  <div class="end-stats">
+    <div class="stat-box"><div class="stat-num gold" id="end-score">0</div><div class="stat-label">Score</div></div>
+    <div class="stat-box"><div class="stat-num green" id="end-correct">0</div><div class="stat-label">Correct</div></div>
+    <div class="stat-box"><div class="stat-num red" id="end-wrong">0</div><div class="stat-label">Wrong</div></div>
+    <div class="stat-box"><div class="stat-num blue" id="end-streak">0</div><div class="stat-label">Best Streak</div></div>
+  </div>
+  <button class="start-btn" id="replay-btn">PLAY AGAIN</button>
+</div>
+
+<!-- Game UI -->
+<div class="header">
+  <div class="score-area">
+    <div class="score-label">Score</div>
+    <div class="score-value" id="score">0</div>
+    <div class="streak" id="streak"></div>
+  </div>
+  <div class="timer-area">
+    <div class="score-label">Time</div>
+    <div class="timer-value" id="timer">30</div>
+  </div>
+</div>
+
+<h1>Logo Liar</h1>
+<p class="subtitle">The name lies &mdash; spot the real logo</p>
+
+<div class="card" id="card">
+  <div class="fake-label" id="fake-label">&mdash;</div>
+  <div class="logo-container" id="logo-container"></div>
+  <div class="round-counter" id="round-counter"></div>
+</div>
+
+<div class="choices" id="choices">
+  <button class="choice-btn" data-idx="0"></button>
+  <button class="choice-btn" data-idx="1"></button>
+  <button class="choice-btn" data-idx="2"></button>
+  <button class="choice-btn" data-idx="3"></button>
+</div>
+
+<div class="instructions">
+  A logo is shown with a <strong>wrong name</strong> above it. Pick the <strong>correct</strong> identity.<br>
+  Use keys <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> to answer quickly.
+</div>
+
+<script>
+// ── Theme toggle ──
+(function () {
+  const toggle = document.getElementById('theme-toggle');
+  const root = document.documentElement;
+
+  function setTheme(theme) {
+    root.setAttribute('data-theme', theme);
+    toggle.innerHTML = theme === 'light' ? '&#9728;' : '&#9790;';
+    localStorage.setItem('logo-liar-theme', theme);
+  }
+
+  // Init from saved preference or system preference
+  const saved = localStorage.getItem('logo-liar-theme');
+  if (saved) {
+    setTheme(saved);
+  } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+    setTheme('light');
+  }
+
+  toggle.addEventListener('click', () => {
+    const current = root.getAttribute('data-theme');
+    setTheme(current === 'light' ? 'dark' : 'light');
+  });
+})();
+
+(function () {
+  // ── Question Bank ──
+  const QUESTIONS = [
+    { logo: 'logos/apple.svg', fakeName: 'Samsung', correctAnswer: 'Apple', wrongChoices: ['Samsung', 'Huawei', 'Microsoft'] },
+    { logo: 'logos/docker.svg', fakeName: 'Kubernetes', correctAnswer: 'Docker', wrongChoices: ['Kubernetes', 'Podman', 'Vagrant'] },
+    { logo: 'logos/python.svg', fakeName: 'Anaconda', correctAnswer: 'Python', wrongChoices: ['Anaconda', 'Cobra', 'Ruby'] },
+    { logo: 'logos/react.svg', fakeName: 'Angular', correctAnswer: 'React', wrongChoices: ['Angular', 'Vue', 'Svelte'] },
+    { logo: 'logos/android.svg', fakeName: 'iOS', correctAnswer: 'Android', wrongChoices: ['iOS', 'HarmonyOS', 'Windows Phone'] },
+    { logo: 'logos/git.svg', fakeName: 'SVN', correctAnswer: 'Git', wrongChoices: ['SVN', 'Mercurial', 'Perforce'] },
+    { logo: 'logos/linux.svg', fakeName: 'Windows', correctAnswer: 'Linux', wrongChoices: ['Windows', 'macOS', 'FreeBSD'] },
+    { logo: 'logos/github.svg', fakeName: 'GitLab', correctAnswer: 'GitHub', wrongChoices: ['GitLab', 'Bitbucket', 'Gitea'] },
+    { logo: 'logos/java.svg', fakeName: 'JavaScript', correctAnswer: 'Java', wrongChoices: ['JavaScript', 'Kotlin', 'C#'] },
+    { logo: 'logos/firefox.svg', fakeName: 'Chrome', correctAnswer: 'Firefox', wrongChoices: ['Chrome', 'Brave', 'Safari'] },
+    { logo: 'logos/rust.svg', fakeName: 'Go', correctAnswer: 'Rust', wrongChoices: ['Go', 'C++', 'Haskell'] },
+    { logo: 'logos/vscode.svg', fakeName: 'Vim', correctAnswer: 'VS Code', wrongChoices: ['Vim', 'Atom', 'Sublime Text'] },
+    { logo: 'logos/spotify.svg', fakeName: 'Apple Music', correctAnswer: 'Spotify', wrongChoices: ['Apple Music', 'Tidal', 'Deezer'] },
+    { logo: 'logos/slack.svg', fakeName: 'Discord', correctAnswer: 'Slack', wrongChoices: ['Discord', 'Teams', 'Zoom'] },
+    { logo: 'logos/youtube.svg', fakeName: 'Twitch', correctAnswer: 'YouTube', wrongChoices: ['Twitch', 'Vimeo', 'Dailymotion'] },
+    { logo: 'logos/nike.svg', fakeName: 'Adidas', correctAnswer: 'Nike', wrongChoices: ['Adidas', 'Puma', 'Reebok'] },
+    { logo: 'logos/mcdonalds.svg', fakeName: 'Burger King', correctAnswer: "McDonald's", wrongChoices: ['Burger King', "Wendy's", 'KFC'] },
+    { logo: 'logos/target.svg', fakeName: 'Walmart', correctAnswer: 'Target', wrongChoices: ['Walmart', 'Costco', 'Best Buy'] },
+    { logo: 'logos/twitter.svg', fakeName: 'Facebook', correctAnswer: 'Twitter', wrongChoices: ['Facebook', 'Mastodon', 'Threads'] },
+    { logo: 'logos/tesla.svg', fakeName: 'Edison', correctAnswer: 'Tesla', wrongChoices: ['Edison', 'Rivian', 'Lucid'] },
+    { logo: 'logos/chrome.svg', fakeName: 'Firefox', correctAnswer: 'Chrome', wrongChoices: ['Firefox', 'Edge', 'Opera'] },
+    { logo: 'logos/gitlab.svg', fakeName: 'GitHub', correctAnswer: 'GitLab', wrongChoices: ['GitHub', 'Bitbucket', 'Codeberg'] },
+    { logo: 'logos/angular.svg', fakeName: 'React', correctAnswer: 'Angular', wrongChoices: ['React', 'Ember', 'Backbone'] },
+    { logo: 'logos/vue.svg', fakeName: 'Nuxt', correctAnswer: 'Vue', wrongChoices: ['Nuxt', 'Svelte', 'Preact'] },
+    { logo: 'logos/npm.svg', fakeName: 'pip', correctAnswer: 'npm', wrongChoices: ['pip', 'yarn', 'cargo'] },
+    { logo: 'logos/swift.svg', fakeName: 'Kotlin', correctAnswer: 'Swift', wrongChoices: ['Kotlin', 'Dart', 'Objective-C'] },
+    { logo: 'logos/kubernetes.svg', fakeName: 'Docker', correctAnswer: 'Kubernetes', wrongChoices: ['Docker', 'Nomad', 'Mesos'] },
+    { logo: 'logos/debian.svg', fakeName: 'Ubuntu', correctAnswer: 'Debian', wrongChoices: ['Ubuntu', 'Fedora', 'Arch'] },
+    { logo: 'logos/ubuntu.svg', fakeName: 'Fedora', correctAnswer: 'Ubuntu', wrongChoices: ['Fedora', 'CentOS', 'Mint'] },
+    { logo: 'logos/redis.svg', fakeName: 'MongoDB', correctAnswer: 'Redis', wrongChoices: ['MongoDB', 'Memcached', 'Cassandra'] },
+    { logo: 'logos/postgresql.svg', fakeName: 'MySQL', correctAnswer: 'PostgreSQL', wrongChoices: ['MySQL', 'SQLite', 'MariaDB'] },
+  ];
+
+  // ── DOM ──
+  const scoreEl = document.getElementById('score');
+  const streakEl = document.getElementById('streak');
+  const timerEl = document.getElementById('timer');
+  const card = document.getElementById('card');
+  const fakeLabel = document.getElementById('fake-label');
+  const logoContainer = document.getElementById('logo-container');
+  const roundCounter = document.getElementById('round-counter');
+  const choicesEl = document.getElementById('choices');
+  const choiceBtns = choicesEl.querySelectorAll('.choice-btn');
+
+  const startScreen = document.getElementById('start-screen');
+  const endScreen = document.getElementById('end-screen');
+  const startBtn = document.getElementById('start-btn');
+  const replayBtn = document.getElementById('replay-btn');
+
+  // ── State ──
+  let score = 0;
+  let streak = 0;
+  let bestStreak = 0;
+  let correctCount = 0;
+  let wrongCount = 0;
+  let timeLeft = 30;
+  let timerInterval = null;
+  let currentCorrect = '';
+  let answered = false;
+  let questionQueue = [];
+  let roundNum = 0;
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function startGame() {
+    score = 0; streak = 0; bestStreak = 0;
+    correctCount = 0; wrongCount = 0;
+    timeLeft = 30; roundNum = 0;
+    answered = false;
+
+    scoreEl.textContent = '0';
+    streakEl.textContent = '';
+    timerEl.textContent = '30';
+    timerEl.className = 'timer-value';
+
+    startScreen.classList.add('hidden');
+    endScreen.classList.add('hidden');
+
+    questionQueue = shuffle(QUESTIONS);
+    showNext();
+    startTimer();
+  }
+
+  function startTimer() {
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      timerEl.textContent = timeLeft;
+      if (timeLeft <= 5) timerEl.className = 'timer-value danger';
+      else if (timeLeft <= 10) timerEl.className = 'timer-value warning';
+      if (timeLeft <= 0) endGame();
+    }, 1000);
+  }
+
+  function endGame() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    document.getElementById('end-score').textContent = score;
+    document.getElementById('end-correct').textContent = correctCount;
+    document.getElementById('end-wrong').textContent = wrongCount;
+    document.getElementById('end-streak').textContent = bestStreak;
+    endScreen.classList.remove('hidden');
+  }
+
+  function showNext() {
+    if (questionQueue.length === 0) questionQueue = shuffle(QUESTIONS);
+    const q = questionQueue.pop();
+    roundNum++;
+    currentCorrect = q.correctAnswer;
+    answered = false;
+
+    card.className = 'card';
+    fakeLabel.textContent = q.fakeName;
+    logoContainer.innerHTML = '<img src="' + q.logo + '" alt="logo">';
+    roundCounter.textContent = 'Round ' + roundNum;
+
+    const choices = shuffle([q.correctAnswer, ...q.wrongChoices]);
+    choiceBtns.forEach((btn, i) => {
+      btn.textContent = choices[i];
+      btn.className = 'choice-btn';
+      btn.dataset.answer = choices[i];
+    });
+  }
+
+  function handleChoice(btn) {
+    if (answered || !timerInterval) return;
+    answered = true;
+
+    const picked = btn.dataset.answer;
+    const isCorrect = picked === currentCorrect;
+
+    if (isCorrect) {
+      streak++;
+      if (streak > bestStreak) bestStreak = streak;
+      correctCount++;
+      const bonus = streak > 1 ? 50 * (streak - 1) : 0;
+      score += 100 + bonus;
+      btn.classList.add('correct-pick');
+      card.classList.add('correct');
+    } else {
+      streak = 0;
+      wrongCount++;
+      btn.classList.add('wrong-pick');
+      card.classList.add('wrong');
+      choiceBtns.forEach(b => {
+        if (b.dataset.answer === currentCorrect) b.classList.add('reveal-correct');
+        b.classList.add('disabled');
+      });
+    }
+
+    scoreEl.textContent = score;
+    streakEl.textContent = streak > 1 ? '\u{1f525} ' + streak + ' streak' : '';
+
+    choiceBtns.forEach(b => b.classList.add('disabled'));
+
+    const delay = isCorrect ? 400 : 1000;
+    setTimeout(() => {
+      if (timerInterval) showNext();
+    }, delay);
+  }
+
+  choiceBtns.forEach(btn => {
+    btn.addEventListener('click', () => handleChoice(btn));
+  });
+
+  startBtn.addEventListener('click', startGame);
+  replayBtn.addEventListener('click', startGame);
+
+  document.addEventListener('keydown', (e) => {
+    if (startScreen.classList.contains('hidden') && endScreen.classList.contains('hidden')) {
+      const idx = parseInt(e.key) - 1;
+      if (idx >= 0 && idx < 4) handleChoice(choiceBtns[idx]);
+    }
+    if (e.code === 'Space' || e.code === 'Enter') {
+      if (!startScreen.classList.contains('hidden') || !endScreen.classList.contains('hidden')) startGame();
+    }
+  });
+})();
+</script>
+</body>
+</html>
