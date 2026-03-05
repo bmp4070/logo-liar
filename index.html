@@ -172,32 +172,52 @@
   .card.correct { border-color: #00c853; box-shadow: 0 0 30px rgba(0,200,83,.2); }
   .card.wrong { border-color: #e10600; box-shadow: 0 0 30px rgba(225,6,0,.2); }
 
-  .fake-label {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: var(--fake-label);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    text-shadow: 0 2px 8px var(--fake-shadow);
-    z-index: 2;
-  }
-
-  .logo-container {
-    width: 160px;
-    height: 160px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .logo-wrapper {
+    position: relative;
+    width: 200px;
+    height: 200px;
     background: var(--logo-bg);
     border: 2px solid var(--logo-border);
     border-radius: 16px;
-    padding: 16px;
+    padding: 20px;
+  }
+
+  .logo-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .logo-container img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+  }
+
+  .fake-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #e10600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px rgba(0,0,0,.7), 0 0 16px rgba(0,0,0,.4);
+    z-index: 2;
+    background: rgba(0,0,0,.15);
+    border-radius: 14px;
+    pointer-events: none;
+  }
+
+  [data-theme="light"] .fake-label {
+    color: #c00;
+    text-shadow: 0 0 8px rgba(255,255,255,.8), 0 0 16px rgba(255,255,255,.5);
+    background: rgba(255,255,255,.2);
   }
 
   .round-counter {
@@ -329,7 +349,8 @@
   /* ── Responsive ── */
   @media (max-width: 480px) {
     .card { padding: 24px 20px; min-width: 280px; }
-    .logo-container { width: 120px; height: 120px; padding: 12px; }
+    .logo-wrapper { width: 160px; height: 160px; padding: 14px; }
+    .fake-label { font-size: 1.3rem; letter-spacing: 2px; }
     .choices { max-width: 340px; }
     .choice-btn { font-size: .95rem; padding: 12px 14px; }
     h1 { font-size: 1.5rem; }
@@ -378,8 +399,10 @@
 <p class="subtitle">The name lies &mdash; spot the real logo</p>
 
 <div class="card" id="card">
-  <div class="fake-label" id="fake-label">&mdash;</div>
-  <div class="logo-container" id="logo-container"></div>
+  <div class="logo-wrapper">
+    <div class="logo-container" id="logo-container"></div>
+    <div class="fake-label" id="fake-label">&mdash;</div>
+  </div>
   <div class="round-counter" id="round-counter"></div>
 </div>
 
@@ -547,6 +570,19 @@
     endScreen.classList.remove('hidden');
   }
 
+  const FONTS = [
+    { family: 'Georgia, serif', style: 'italic', weight: '900' },
+    { family: 'Impact, sans-serif', style: 'normal', weight: '400' },
+    { family: 'Courier New, monospace', style: 'normal', weight: '700' },
+    { family: "'Segoe UI', system-ui, sans-serif", style: 'normal', weight: '900' },
+    { family: 'Times New Roman, serif', style: 'normal', weight: '700' },
+    { family: 'Arial Black, sans-serif', style: 'normal', weight: '900' },
+    { family: 'Trebuchet MS, sans-serif', style: 'italic', weight: '700' },
+    { family: 'Verdana, sans-serif', style: 'normal', weight: '700' },
+    { family: 'Palatino, serif', style: 'italic', weight: '700' },
+    { family: 'Lucida Console, monospace', style: 'normal', weight: '400' },
+  ];
+
   function showNext() {
     if (questionQueue.length === 0) questionQueue = shuffle(QUESTIONS);
     const q = questionQueue.pop();
@@ -556,6 +592,10 @@
 
     card.className = 'card';
     fakeLabel.textContent = q.fakeName;
+    const font = FONTS[Math.floor(Math.random() * FONTS.length)];
+    fakeLabel.style.fontFamily = font.family;
+    fakeLabel.style.fontStyle = font.style;
+    fakeLabel.style.fontWeight = font.weight;
     logoContainer.innerHTML = '<img src="' + q.logo + '" alt="logo">';
     roundCounter.textContent = 'Round ' + roundNum;
 
